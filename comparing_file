@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+dos2unix Columns123.csv >/dev/null 2>&1
+dos2unix CMDB_5_Columns.csv >/dev/null 2>&1
+
+#Storing the columns data into the variables
+rm -f result.txt
+while read -r CMDB_line
+do
+  ARCH=$(echo $CMDB_line | cut -d ',' -f5)
+  OS=$(echo $CMDB_line | cut -d ',' -f3)
+  VER=$(echo $CMDB_line | cut -d ',' -f4)
+  SER_NAME=$(echo $CMDB_line | cut -d ',' -f1)
+
+  echo -e "$CMDB_line" >> result.txt
+
+  while read -r Columns123_line
+  do
+    ARCH_AP=$(echo $Columns123_line | cut -d ',' -f3)
+    OS_AP=$(echo $Columns123_line | cut -d ',' -f1)
+    VER_AP=$(echo $Columns123_line | cut -d ',' -f2)
+
+
+#Comparing the two files variables and printing the patching column as yes
+  if [ "$ARCH" = "$ARCH_AP" ] || [ "$ARCH" = "amd64" ]
+  then
+    if [ "$OS" = "$OS_AP" ]
+    then
+      if [ "$VER" = "$VER_AP" ]
+      then
+       #sed -i "/${SER_NAME}/d" result.txt
+        #grep -v $SER_NAME result.txt > result.txt
+        echo  "$CMDB_line,YES" >> result.txt
+        break
+      fi
+    fi
+  fi
+
+  done < Columns123.csv
+
+done < CMDB_5_Columns.csv
+sed -i 's/Red Hat Enterprise Linux Server/CentOSrelease/g' result.txt
+cat result.txt | egrep '(YES|SUSE)' > result_1.csv
